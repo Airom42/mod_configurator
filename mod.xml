@@ -3,46 +3,18 @@
     <name>Mod Configurator</name>
     <description>Saves and Loads mod configs for each of your saves!</description>
     <author>Airom</author>
-    <version>2.0.0</version>
+    <version>1.2.0</version>
     <init>
       <!-- NOTE: Improper use of this system can result in you having to manually enable/disable all your mods.
       To save a config to a save file, use saveModConfig() or smc(). Once you have saved a config to a save file, use loadModConfig() or lmc() to load the mods to that file.
       Reloading mods is somewhat unstable, and may cause your game to crash.
       enableAllMods() and disableAllMods() do just that (except for core, full, and this mod) -->
-      <tile id="mod_disabled" sheet="icon.png" x="0"/>
-      <tile id="mod_enabled" sheet="icon.png" x="1"/>
-      <lang id="en_US">
-        <section id="mod_configurator">
-          <text id="new_config">Enter the name for this config:</text>
-        </section>
-      </lang>
       <action>
-        if(getGlobal('loadedModConfigs') == null) setGlobal('loadedModConfigs', []);
-
-          function openModConfigurator() {
-            if(getLocalPlayer() == null)
-              trace("Window not supported from main menu. Please use modconfirguratorhelp() or run this command inside of a save.");
-            else
-              runProcedure('modConfigurator');
-          }
-
-          function modconfirguratorhelp() {
-            trace("Welcome to the mod configurator help UI. This mod is designed to make loading different mods easier. \n Supported commands:");
-            trace("mcalias(): returns a list of aliases of functions used by this mod");
-            trace("openModConfigurator(): Opens the mod configuration window, only supported when a save is loaded.");
-
-          }
-
-          function opc() {
-            openModConfigurator();
-          }
-
           function enableAllMods(){
             for(mod in getMods()) mod.setEnabled(true);
           }
-
           function disableAllMods(){
-            var blacklist = ['Full Version', 'Core', 'Mod Configurator', 'Utils'];
+            var blacklist = ['Full Version', 'Core', 'Mod Configurator'];
             for(mod in getMods()) if(blacklist.indexOf(mod.name) == -1) mod.setEnabled(false);
           }
 
@@ -73,17 +45,6 @@
             reloadData();
             return 'Mod config loaded. Reload save to complete process.';
           }
-          function checkDuplicateMods(){
-            var modKeys = [];
-            var duplicates = [];
-            for(mod in getMods()){
-              if(modKeys.hasItem(mod.name))
-                duplicates.push(mod.name);
-              else
-                modKeys.push(mod.name);
-            }
-            return duplicates;
-          }
           //Alias functions for ease of use
           function lmc(){
             loadModConfig();
@@ -92,88 +53,5 @@
             saveModConfig();
           }
       </action>
-
-      <procedure id="modConfigurator">
-        <window width="192" height="112" closeable="true" type="xml">
-          <text text="Mod Configurator" x="96" y="4"/>
-          <text text="Choose Config to Load" x="56" y="16"/>
-          <list x="10" y="28" cols="1" rows="4">
-            <renderer width="96" height="16">
-              <text text="item.text" x="4" y="0" align="left"/>
-              <onSelect>
-                <action>
-
-                </action>
-
-              </onSelect>
-              <!-- <onHover>
-                <action>
-                  window.details.x = 96;
-                  if (item == null) window.details.setString();
-                  else window.details.setString(item.icon);
-                </action>
-              </onHover> -->
-            </renderer>
-            <init>
-              /*for(mod in getMods()){
-                addItem({text: mod.name});
-              }*/
-              addItem({text:"Config One"});
-              addItem({text:"Another Config"});
-            </init>
-          </list>
-          <button x="120" y="16" width="64" height="-1" text="New Config">
-            <onSelect>
-              <window type="input" message="mod_configurator.new_config">
-                <action>
-                  trace(result);
-                  setGlobal('loadedModConfigs', getGlobal('loadedModConfigs').push(result));
-                </action>
-              </window>
-            </onSelect>
-          </button>
-          <button x="120" y="32" width="64" height="-1" text="Edit Config">
-            <onSelect><action>trace('new Config')</action></onSelect>
-          </button>
-          <button x="120" y="48" width="64" height="-1" text="Delete Config">
-            <onSelect><action>trace('new Config')</action></onSelect>
-          </button>
-          <button x="120" y="64" width="64" height="-1" text="Enabled Mods">
-            <onSelect><run procedure="listMods" /></onSelect>
-          </button>
-        </window>
-      </procedure>
-
-      <procedure id="listMods">
-        <window width="192" height="112" closeable="true" type="xml">
-          <text text="Currently Loaded Mods" x="96" y="4"/>
-          <list x="10" y="16" cols="1" rows="5">
-            <renderer width="96" height="16">
-              <tile id="item.icon" x="0" y="0"/>
-              <text text="item.text" x="20" y="0" align="left"/>
-              <onSelect>
-                <action>
-
-                </action>
-
-              </onSelect>
-              <!-- <onHover>
-                <action>
-                  window.details.x = 96;
-                  if (item == null) window.details.setString();
-                  else window.details.setString(item.icon);
-                </action>
-              </onHover> -->
-            </renderer>
-            <init>
-              for(mod in getMods()){
-                var icon = mod.isEnabled() ? 'mod_enabled' : 'mod_disabled';
-                addItem({text: mod.name, icon:icon});
-              }
-            </init>
-          </list>
-          <button x="12" y="90" width="164" height="-1" text="Close"><onSelect><action>window.close();</action></onSelect></button>
-        </window>
-      </procedure>
     </init>
 </mod>
