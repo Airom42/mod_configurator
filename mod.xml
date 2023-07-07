@@ -1,57 +1,226 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <mod>
-    <name>Mod Configurator</name>
-    <description>Saves and Loads mod configs for each of your saves!</description>
-    <author>Airom</author>
-    <version>1.2.0</version>
-    <init>
-      <!-- NOTE: Improper use of this system can result in you having to manually enable/disable all your mods.
-      To save a config to a save file, use saveModConfig() or smc(). Once you have saved a config to a save file, use loadModConfig() or lmc() to load the mods to that file.
-      Reloading mods is somewhat unstable, and may cause your game to crash.
-      enableAllMods() and disableAllMods() do just that (except for core, full, and this mod) -->
-      <action>
-          function enableAllMods(){
-            for(mod in getMods()) mod.setEnabled(true);
-          }
-          function disableAllMods(){
-            var blacklist = ['Full Version', 'Core', 'Mod Configurator'];
-            for(mod in getMods()) if(blacklist.indexOf(mod.name) == -1) mod.setEnabled(false);
-          }
+	<name>Mod Configurator</name>
+	<description>Saves and Loads mod configs for each of your saves!</description>
+	<author>Airom</author>
+	<version>1.2.0</version>
+	<init>
+		<!-- NOTE: Improper use of this system can result in you having to manually enable/disable all your mods.
+			To save a config to a save file, use saveModConfig() or smc(). Once you have saved a config to a save file, use loadModConfig() or lmc() to load the mods to that file.
+			Reloading mods is somewhat unstable, and may cause your game to crash.
+			enableAllMods() and disableAllMods() do just that (except for core, full, and this mod) -->
+		<tile id="mod_enabled" sheet="icon.png" x="0"/>
+		<tile id="mod_disabled" sheet="icon.png" x="1"/>
+		<action>
+				if(getGlobal('loadedModConfigs') == null) setGlobal('loadedModConfigs', []);
 
-          //Saves the list of currently enabled mods as a stringified array to the save
-          function saveModConfig(){
-            var modList = [];
-            for(mod in getMods()) {
-              if (mod.isEnabled()){
-                underName = new EReg("[ ]+", "g").replace(mod.name, "_");
-                lowerName = underName.toLowerCase();
-                modList.push(lowerName);
-              }
-            }
-            getLocalPlayer().setString('enabled_mods', modList);
-            return 'Mod config stored. Save your game to complete process.';
-          }
+					function openModConfigurator() {
+						if(getLocalPlayer() == null)
+							trace("Window not supported from main menu. Please use modconfirguratorhelp() or run this command inside of a save.");
+						else
+							runProcedure('modConfigurator');
+					}
 
-          //Loads the mod config from the saved stringified array
-          function loadModConfig(){
-            disableAllMods();
-            text = getLocalPlayer().getString('enabled_mods');
-            if(text == null) return 'No mod config found';
-            list = text.substr(1,text.length-2).split(",");
-            for(num in 0 ... list.length){
-              if(getMod(list[num]) != null) getMod(list[num]).setEnabled(true);
-              else trace(list[num] + ' is null');
-            }
-            reloadData();
-            return 'Mod config loaded. Reload save to complete process.';
-          }
-          //Alias functions for ease of use
-          function lmc(){
-            loadModConfig();
-          }
-          function smc(){
-            saveModConfig();
-          }
-      </action>
-    </init>
+					function modconfirguratorhelp() {
+						trace("Welcome to the mod configurator help UI. This mod is designed to make loading different mods easier. \n Supported commands:");
+						trace("mcalias(): returns a list of aliases of functions used by this mod");
+						trace("openModConfigurator(): Opens the mod configuration window, only supported when a save is loaded.");
+
+					}
+
+					function opc() {
+						openModConfigurator();
+					}
+
+					function enableAllMods(){
+						for(mod in getMods()) mod.setEnabled(true);
+					}
+
+					function disableAllMods(){
+						var blacklist = ['Full Version', 'Core', 'Mod Configurator', 'Utils'];
+						for(mod in getMods()) if(blacklist.indexOf(mod.name) == -1) mod.setEnabled(false);
+					}
+
+					//Saves the list of currently enabled mods as a stringified array to the save
+					function saveModConfig(){
+						var modList = [];
+						for(mod in getMods()) {
+							if (mod.isEnabled()){
+								underName = new EReg("[ ]+", "g").replace(mod.name, "_");
+								lowerName = underName.toLowerCase();
+								modList.push(lowerName);
+							}
+						}
+						getLocalPlayer().setString('enabled_mods', modList);
+						return 'Mod config stored. Save your game to complete process.';
+					}
+
+					//Loads the mod config from the saved stringified array
+					function loadModConfig(){
+						disableAllMods();
+						text = getLocalPlayer().getString('enabled_mods');
+						if(text == null) return 'No mod config found';
+						list = text.substr(1,text.length-2).split(",");
+						for(num in 0 ... list.length){
+							if(getMod(list[num]) != null) getMod(list[num]).setEnabled(true);
+							else trace(list[num] + ' is null');
+						}
+						reloadData();
+						return 'Mod config loaded. Reload save to complete process.';
+					}
+					function checkDuplicateMods(){
+						var modKeys = [];
+						var duplicates = [];
+						for(mod in getMods()){
+							if(modKeys.hasItem(mod.name))
+								duplicates.push(mod.name);
+							else
+								modKeys.push(mod.name);
+						}
+						return duplicates;
+					}
+					//Alias functions for ease of use
+					function lmc(){
+						loadModConfig();
+					}
+					function smc(){
+						saveModConfig();
+					}
+
+					function saveConfigList(list) {
+						var str = list.toString();
+						getLocalPlayer().setString('mod_configurator_configs', str.substring(1, str.length - 1));
+					}
+
+					function createConfig(name, currentMods) {
+						trace(name);
+						var mods = [];
+						for(mod in currentMods) {
+							if(mod.enabled) {
+								mods.push(mod.name); 
+							}
+						}
+						var str = mods.toString();
+						str = str.substring(1, str.length - 1);
+						getLocalPlayer().setString('mod_configurator_' + name, str);
+						var configList = getLocalPlayer().getString('mod_configurator_configs').split(',');
+						configList.push(name);
+						saveConfigList(configList);
+					}
+		</action>
+
+		<procedure id="modConfigurator">
+			<action>
+				if(getLocalPlayer().getString('mod_configurator_configs') == null) {
+					getLocalPlayer().setString('mod_configurator_configs', 'Vanilla');
+				}
+			</action>
+			<window type="xml" width="192" height="112" closeButton="true" closeable="true">
+				<text section="mod_configurator" id="title" x="96" y="4"/>
+				<text section="mod_configurator" id="choose_config" x="56" y="16"/>
+				<list x="10" y="28" cols="1" rows="4">
+					<renderer width="96" height="16">
+						<text text="item.text" x="4" y="0" align="left"/>
+						<onSelect>
+							<menu section="mod_configurator" closeable="true">
+								<choice id="load">
+									<action>
+										if(item.text == 'Vanilla') {
+											disableAllMods();
+										} else {
+											var configStr = getLocalPlayer().getString('mod_configurator_' + item.text);
+											if(configStr == null) {
+												trace('ERROR: Config not found: ' + configStr);
+											} else {
+												disableAllMods();
+												var mods = configStr.split(',');
+												trace('ModConfigurator: Loading mods: ' + mods);
+												for(mod in mods) {
+													getMod(mod).setEnabled(true);
+												}
+												// reloadData();
+											}
+										}
+									</action>
+									<dialogue section="mod_configurator" id="reload_save" />
+								</choice>
+								<!-- <choice id="edit"></choice> -->
+								<choice id="delete">
+									<action>
+										player.setString('mod_configurator_' + item.text, null);
+										var configList = getLocalPlayer().getString('mod_configurator_configs').split(',');
+										configList.remove(item.text);
+										saveConfigList(configList);
+										window.close();
+									</action>
+								</choice>
+							</menu>
+						</onSelect>
+					</renderer>
+					<init>
+						var configs = getLocalPlayer().getString('mod_configurator_configs').split(',');
+						for(config in configs) {
+							addItem({text: config});
+						}	
+					</init>
+				</list>
+				<button x="120" y="16" width="64" height="-1" text="New Config">
+					<onSelect>
+						<window type="input" message="mod_configurator.new_config">
+							<action>createConfig(result, getMods()); window.close()</action>
+							<dialogue section="mod_configurator" id="config_created" />
+							<run procedure="modConfigurator" />
+						</window>
+					</onSelect>
+				</button>
+				<button x="120" y="32" width="64" height="-1" text="Enabled Mods">
+					<onSelect>
+						<run procedure="listMods" />
+					</onSelect>
+				</button>
+			</window>
+		</procedure>
+
+		<procedure id="listMods">
+			<window width="192" height="128" closeButton="true" closeable="true" type="xml">
+				<text section="mod_configurator" id="loaded_mods" x="96" y="4"/>
+				<list x="16" y="20" cols="1" rows="6">
+					<renderer width="160" height="16">
+						<tile id="item.icon" x="0" y="0"/>
+						<text text="item.text" x="20" y="0" align="left"/>
+					</renderer>
+					<init>
+							var mods = [];
+							for(mod in getMods()){
+								mods.push({name: mod.name, enabled: mod.isEnabled()});
+							}
+							mods.sort(function(a, b) {
+								if(a.enabled && !b.enabled) return -1;
+								if(!a.enabled && b.enabled) return 1;
+								if(a.name &lt; b.name) return -1;
+								return 1;
+							});
+							for(mod in mods) {
+								var icon = mod.enabled ? 'mod_enabled' : 'mod_disabled';
+								addItem({text: mod.name, icon:icon});
+							}
+					</init>
+				</list>
+			</window>
+		</procedure>
+
+		<lang id="en_US">
+			<section id="mod_configurator">
+				<text id="title">Mod Configurator</text>
+				<text id="choose_config">Mod Configs:</text>
+				<text id="loaded_mods">Currently Loaded Mods</text>
+				<text id="new_config">Enter the name for this config:</text>
+				<text id="reload_save">Mod config loaded. Please exit to the main menu and either reload mods (Ctrl + Shift + M) or restart your game for the changes to take effect.</text>
+				<text id="config_created">New config created. Please save your game to preserve this config.</text>
+				<text id="load">Load</text>
+				<text id="edit">Edit</text>
+				<text id="delete">Delete</text>
+			</section>
+		</lang>
+	</init>
 </mod>
